@@ -74,10 +74,12 @@ void main() {
             this.set(Parser.parseAssignment(line));
         } else {
             cmd = Parser.parseLine(line);
-            res, exited = cmd.exec();
+            res, status_code = cmd.exec();
             print(res);
-            if (exited)
+            if (status_code == ErrorCode.EXITED)
                 break;
+	    else if (status_code != ErrorCode.SUCCESS)
+	    	print(f"Error occured: {status_code}")
         }
     }
 }
@@ -86,40 +88,35 @@ void main() {
 
 Статический класс `Parser` реализует функциональность разбора командной строки и конструирования команды по ней. Метод `parse` принимает командную строку и возвращает экземпляр `Executable`, выполняющий данную команду. Методы `isAssignment` и `parseAssignment` используются для проверки, что введеная строка обьявляет переменную, и выделения названия этой переменной и ее значения. Приватные методы класса `Parser` нужны для разбора строки и подстановки значений переменных. Метод `parseArbitaryQuotedString` принимает строку с произвольными кавычками и обрабатывает ее соответственно. Для работы с строкой с двойными кавычками используется метод `parseStringWithDoubleQuotes`.
 
-В `cmd` записывается результат метода `Parser.parse`. Эта переменная хранит экземпляр интерфейса `Executable`, а значит является либо экземпляром `PipedCommand`, либо экземпляром одного из наследников абстрактного класса `AbstractCommand`. Далее вызывается метод `exec` этого обьекта, выполняющий соответствующую команду. Для поддержки пайплайнов класс `AbstractCommand` содержит метод `pipe`, который принимает вывод предыдущей команды и так же, как и `execute` возвращает результат текущей команды. Тогда метод `PipedCommand.exec` выглядит следующим образом:
+В `cmd` записывается результат метода `Parser.parse`. Эта переменная хранит экземпляр интерфейса `Executable`, а значит является либо экземпляром `PipedCommand`, либо экземпляром одного из наследников абстрактного класса `AbstractCommand`. Далее вызывается метод `exec` этого обьекта, выполняющий соответствующую команду. Для поддержки пайплайнов метод `exec` класса `AbstractCommand` принимает в качестве аргумента вывод предыдущей команды или `null`, если его нет. Тогда метод `PipedCommand.exec` выглядит следующим образом:
 ```java
-(String, bool) exec() {
-    out, exited = this.commands.exec();
+(String, ErrorCode) exec(input) {
+    out, status_code = this.commands.exec();
     for cmd in this.commands[1:] {
-        if (exited)
+        if (status_code != ErrorCode.SUCCESS)
             break;
-        out, exited = cmd.pipe(out);
+        out, status_code = cmd.exec(out);
     }
+    return out, status_code
 }
 ```
-Сами команды реализуются в виде наследников абстрактного класса `AbstractCommand` с помощью реализации методов `exec` и `pipe` для соответствующего поведения. Дефолтное поведение для команды определено в классе `AbstractCommand` подобным образом:
+Сами команды реализуются в виде наследников абстрактного класса `AbstractCommand` с помощью реализации для методов `exec` соответствующего поведения. Дефолтное поведение для команды определено в классе `AbstractCommand` подобным образом:
 ```java
-(String, bool) exec() {
-    return ("", false);
-}
-(String, bool) pipe(input) {
-    return this.exec();
+(String, ErrorCode) exec(input: String = null) {
+    return ("", ErrorCode.SUCCESS);
 }
 ```
-Таким образом, можно не переопределять метод `pipe`, так как будет использован переопределенный метод `exec`, что полезно, например, для команды `pwd`.
-Команда `echo` будет выглядеть так:
+Команда `echo`, например, будет выглядеть так:
 ```java
 class Echo : AbstractCommand {
-    override (String, bool) exec() {
-        res = " ".join(this.arguments);
-        return (res, false);
-    }
-    override (String, bool) pipe(input) {
+    override (String, ErrorCode) exec(input) {
         res = " ".join(this.arguments + [input]);
-        return (res, false);
+        return (res, ErrorCode.SUCCESS);
     }
 }
 ```
+Для вызова внешних команд используется класс команды `CommandExecuter`, первым аргументом которого является имя программы, которую нужно вызвать.
+Для проброса ошибок используются коды ошибок, определенные в перечислении(Enum) `ErrorCode`. В частности, важные следующие коды: `ErrorCode.SUCCESS`, означающий, что команда успешно завершилась, `ErrorCode.EXITED`, означающая, что нужно прекратить выполнение команд. Все остальные коды являются ошибками, которые выводятся пользователю.
 Для добавления новой команды достаточно реализовать нового наследника класса `AbstractCommand` и добавить конструктор класса новой команды в класс `Parser`.
 
 Приведенная архитектура проходит все описанные выше функциональные требования, позволяет легко добавлять новые команды и содержит модули с четко разделенной ответственностью.
