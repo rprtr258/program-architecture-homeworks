@@ -102,7 +102,7 @@ void main() {
 String parseStringWithDoubleQuotes(line) {
     bool changed = true;
     while (changed) {
-        changed = False;
+        changed = false;
         for (varname, value in self.vars.items()) {
 	    if (varname in line) {
     	        line = line.replace(varname, value);
