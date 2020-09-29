@@ -127,7 +127,7 @@ String parseStringWithDoubleQuotes(line) {
     return out, status_code
 }
 ```
-Сами команды реализуются в виде наследников абстрактного класса `AbstractCommand` с помощью реализации для методов `exec` соответствующего поведения. Дефолтное поведение для команды определено в классе `AbstractCommand` подобным образом:
+Сами команды реализуются в виде наследников абстрактного класса `AbstractCommand` с помощью имплементации соответствующего поведения метода `exec`. Дефолтное поведение для команды определено в классе `AbstractCommand` подобным образом:
 ```java
 (String, ErrorCode) exec(input: String = null) {
     return ("", ErrorCode.SUCCESS);
