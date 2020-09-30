@@ -103,8 +103,8 @@ String parseStringWithDoubleQuotes(line) {
     while (changed) {
         changed = false;
         for (varname, value in self.vars.items()) {
-	    if (varname in line) {
-    	        line = line.replace(varname, value);
+	    if (f"${varname}" in line) {
+    	        line = line.replace(f"${varname}", value);
 		changed = true;
             }
         }
