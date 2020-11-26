@@ -16,7 +16,7 @@ F -- Exit to menu --> A
 ```
 В каждом состоянии определяются методы _processInput_, _update_ и _draw_, реализующие активность соответствующего состояния. _processInput_ в разных состояниях при нажатии на одну и ту же кнопку, должен делать разные действия, например, в меню кнопка "вниз" выберет следующий пункт меню, а в игре переместит персонажа вниз. Поэтому для взаимодействия с пользователем используются _Команды_ из соответствующего паттерна для каждой кнопки и каждого состояния. Кнопки, которые не нужны состоянию игры(например кнопка влево в меню) соответственно не создаются.
 ## Процесс игры. Паттерн Game loop
-Сама игра работает согласно паттерну **Game loop**, то есть в цикле вызываются три функции:
+Сама игра работает согласно паттерну _Game loop_, то есть в цикле вызываются три функции:
 ```kotlin
 processInput();
 update();
@@ -31,21 +31,17 @@ draw();
 Как уже было сказано, для взаимодействия с пользователем используется паттерн **Команда**, которые создаются и выполняются методе _processInput_.
 ### Метод update
 Обновление мобов происходит следующим образом:
-`TODO: мб вытащить логику для вычисления окрестности карты и мобов куда нибудь`
 ```kotlin
 for (creature : this.creatures) {
 	creatureCoords = mob.getCoords();
 	neighbourhood = this.map.getNeighbourhood(creatureCoords); // Окрестность на карте
-	nearCreatures = List();
-	for (creature2 for creature2 in this.creatures)
-		if (creature2 != creature and are_close(creature, creature2)
-			nearCreatures.add(creature2);
+	nearCreatures = this.getNeighbourhood(creatureCoords);
 	creature.update(nearCreatures, neighbourhood);
 }
 for (creature : this.creatures) {
 	if (creature.isDead()) {
 		// gain EXP to player
-		// create loot and give it to player
+		// create loot using LootDirector and give it to player
 	}
 }
 ```
@@ -72,4 +68,4 @@ for (creature : this.creatures)
 - _currentXP_ - текущее количество опыта на новый уровень
 - _neededXP_ - нужное количество уровня для левелапа
 - _level_ - текущий уровень
-Влияние опыта на характеристики учитывается вместе с влиянием предметов в ???, так как и предметы и **Level** могут обновлять статы персонажа методами вида ```Stats -> Stats```.
+Влияние опыта на характеристики учитывается вместе с влиянием предметов в _Entity.getStats()_, так как и предметы и **Level** могут обновлять статы персонажа методами вида ```Stats -> Stats```.
